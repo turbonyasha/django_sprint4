@@ -12,9 +12,11 @@ from .forms import UserProfileForm
 from django.views.generic.detail import SingleObjectMixin
 from django.http import Http404
 from django.urls import reverse
-from django.conf import settings
+from .forms import PostCreateForm
 
 User = get_user_model()
+
+PAGINATION_COUNT = 10
 
 def get_published_posts(posts=Post.objects.all()):
     return posts.filter(
@@ -24,11 +26,18 @@ def get_published_posts(posts=Post.objects.all()):
     )
 
 
-class AddPostsUserAndCategoryView(SingleObjectMixin):
+class OnlyAuthorMixin(UserPassesTestMixin):
+
+    def test_func(self):
+        object = self.get_object()
+        return object.author == self.request.user 
+
+
+class PaginationMixin(SingleObjectMixin):
     """
     Миксин для пагинации на странице пользователя
     """
-    paginate_by = settings.POSTS_PER_PAGE
+    paginate_by = PAGINATION_COUNT
 
     def get_queryset(self):
         if self.object == self.request.user:
@@ -45,15 +54,27 @@ class PostListView(ListView):
     paginate_by = 10
 
 
-class PostCreateView(CreateView):
+class PostCreateView(LoginRequiredMixin, CreateView):
     """
     CBV для создания нового поста.
     Доделать: поля и условия из ТЗ
     """
     model = Post
-    fields = '__all__'
     template_name = 'blog/create.html'
-    success_url = reverse_lazy('blog:post_detail')
+    form_class = PostCreateForm
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={
+                'profile': self.request.user.username
+            }
+        )
+    
 
 
 class SinglePostView(DetailView):
@@ -89,7 +110,7 @@ class CategoryView(ListView):
         return context
 
 
-class ProfileView(AddPostsUserAndCategoryView, ListView):
+class ProfileView(PaginationMixin, ListView):
     """
     CBV для отображения профиля пользователя
     и списка опубликованных им постов.
@@ -111,7 +132,7 @@ class ProfileView(AddPostsUserAndCategoryView, ListView):
         return context
 
 
-class ProfileEditView(UserPassesTestMixin, UpdateView):
+class ProfileEditView(OnlyAuthorMixin, UpdateView):
     """
     CBV для редактирования профиля пользователя.
     """
@@ -125,10 +146,5 @@ class ProfileEditView(UserPassesTestMixin, UpdateView):
     def get_success_url(self):
         return reverse('blog:profile', kwargs={'profile': self.object.username})
     
-    def test_func(self):
-        # Получаем текущий объект.
-        object = self.get_object()
-        # Метод вернёт True или False. 
-        # Если пользователь - автор объекта, то тест будет пройден.
-        # Если нет, то будет вызвана ошибка 403.
-        return object.username == self.request.user.username
+
+
