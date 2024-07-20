@@ -1,9 +1,20 @@
 from datetime import datetime
 
+from django.db.models.base import Model as Model
+from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404, render
-
+from django.contrib.auth import get_user_model
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Post, Category
+from .forms import UserProfileForm
+from django.views.generic.detail import SingleObjectMixin
+from django.http import Http404
+from django.urls import reverse
+from django.conf import settings
 
+User = get_user_model()
 
 def get_published_posts(posts=Post.objects.all()):
     return posts.filter(
@@ -13,28 +24,111 @@ def get_published_posts(posts=Post.objects.all()):
     )
 
 
-def index(request):
-    return render(request, 'blog/index.html', {
-        'post_list': get_published_posts()[0:5]
-    })
+class AddPostsUserAndCategoryView(SingleObjectMixin):
+    """
+    Миксин для пагинации на странице пользователя
+    """
+    paginate_by = settings.POSTS_PER_PAGE
+
+    def get_queryset(self):
+        if self.object == self.request.user:
+            return self.object.posts.comment_count().order_by('-pub_date')
+        return self.object.posts.all().order_by('-pub_date')
+    
+
+class PostListView(ListView):
+    """CBV для отображения списка всех постов."""
+
+    model = Post
+    ordering = 'id'
+    template_name = 'blog/index.html'
+    paginate_by = 10
 
 
-def post_detail(request, post_id):
-    return render(request, 'blog/detail.html', {
-        'post': get_object_or_404(
-            get_published_posts(),
-            pk=post_id
-        ),
-    })
+class PostCreateView(CreateView):
+    """
+    CBV для создания нового поста.
+    Доделать: поля и условия из ТЗ
+    """
+    model = Post
+    fields = '__all__'
+    template_name = 'blog/create.html'
+    success_url = reverse_lazy('blog:post_detail')
 
 
-def category_posts(request, category_slug):
-    category = get_object_or_404(
-        Category.objects.all(),
-        slug=category_slug,
-        is_published=True
-    )
-    return render(request, 'blog/category.html', {
-        'post_list': get_published_posts(category.posts.all()),
-        'category': category,
-    })
+class SinglePostView(DetailView):
+    model = Post
+    template_name = 'blog/detail.html'
+    pk_url_kwarg = 'post_id'
+
+
+class CategoryView(ListView):
+    """CBV для отображения списка всех постов
+    в определенной категории."""
+
+    model = Post
+    ordering = 'id'
+    template_name = 'blog/category.html'
+    paginate_by = 10
+    slug_url_kwarg = 'category_slug'
+    context_object_name = 'category'
+
+    def get_queryset(self):
+        category_slug = self.kwargs['category_slug']
+        return Post.objects.filter(category__slug=category_slug)
+    # .order_by('-published_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category_slug = self.kwargs['category_slug']
+        try:
+            category = Category.objects.get(slug=category_slug)
+            context['category'] = category.title  # Добавляем название категории в контекст
+        except Category.DoesNotExist:
+            context['category'] = 'Unknown Category'  # Обработка случая, если категория не найдена
+        return context
+
+
+class ProfileView(AddPostsUserAndCategoryView, ListView):
+    """
+    CBV для отображения профиля пользователя
+    и списка опубликованных им постов.
+    """
+
+    model = User
+    template_name = 'blog/profile.html'
+    context_object_name = 'profile'
+    slug_field = 'username'
+    slug_url_kwarg = 'profile'
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object(queryset=User.objects.all())
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile'] = self.object
+        return context
+
+
+class ProfileEditView(UserPassesTestMixin, UpdateView):
+    """
+    CBV для редактирования профиля пользователя.
+    """
+    model = User
+    form_class = UserProfileForm
+    template_name = 'blog/user.html'
+
+    def get_object(self):
+        return User.objects.get(username=self.request.user.username)
+    
+    def get_success_url(self):
+        return reverse('blog:profile', kwargs={'profile': self.object.username})
+    
+    def test_func(self):
+        # Получаем текущий объект.
+        object = self.get_object()
+        # Метод вернёт True или False. 
+        # Если пользователь - автор объекта, то тест будет пройден.
+        # Если нет, то будет вызвана ошибка 403.
+        return object.username == self.request.user.username
