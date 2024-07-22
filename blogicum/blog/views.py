@@ -20,6 +20,7 @@ from .utils import (
     OnlyAuthorMixin,
     PaginationMixin,
     get_published_posts,
+    GetObjectMixin
 )
 
 
@@ -58,18 +59,12 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         )
 
 
-class SinglePostView(DetailView):
+class SinglePostView(GetObjectMixin, DetailView):
     """CBV для просмотра отдельного поста."""
 
     model = Post
     template_name = 'blog/detail.html'
     pk_url_kwarg = 'post_id'
-
-    def get_object(self):
-        return get_object_or_404(
-            Post,
-            pk=self.kwargs.get('post_id')
-        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -85,52 +80,40 @@ class SinglePostView(DetailView):
         return context
 
 
-class PostUpdateView(OnlyAuthorMixin, UpdateView):
+class PostUpdateView(OnlyAuthorMixin, GetObjectMixin, UpdateView):
     """CBV для редактирования поста."""
 
     model = Post
     form_class = PostCreateForm
     template_name = 'blog/create.html'
 
-    def get_object(self):
-        return get_object_or_404(
-            Post,
-            pk=self.kwargs.get('post_id')
-        )
-
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail',
             kwargs={'post_id': self.kwargs.get('post_id')}
         )
-    
+
     def handle_no_permission(self):
         return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
 
 
-class PostDeleteView(OnlyAuthorMixin, DeleteView):
+class PostDeleteView(OnlyAuthorMixin, GetObjectMixin, DeleteView):
     """CBV для удаления поста."""
 
     model = Post
     success_url = reverse_lazy('blog:index')
     form_class = PostDeleteForm
     template_name = 'blog/create.html'
-    
-    def get_object(self):
-        return get_object_or_404(
-            Post,
-            pk=self.kwargs.get('post_id')
-        )
-    
+
     def form_valid(self, form):
         return super(PostDeleteForm, self).form_valid(form)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         form = self.form_class(instance=self.object)
         context['form'] = form
         return context
-    
+
     def handle_no_permission(self):
         return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
 
@@ -152,7 +135,11 @@ class CategoryView(ListView):
             slug=self.kwargs['category_slug'],
             is_published=True
         )
-        return get_published_posts().filter(category=self.category).order_by('-pub_date')
+        return (
+            get_published_posts()
+            .filter(category=self.category)
+            .order_by('-pub_date')
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -1,8 +1,8 @@
+from django import forms
 from django.contrib.auth.models import User
 from django.forms import ModelForm
-from .models import Post, Comment
-from django import forms
 
+from .models import Post, Comment
 
 class UserProfileForm(ModelForm):
     class Meta:
@@ -29,7 +29,6 @@ class CommentForm(ModelForm):
 
 
 class PostDeleteForm(ModelForm):
-
     class Meta:
         model = Post
         fields = []

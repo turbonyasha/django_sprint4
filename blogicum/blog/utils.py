@@ -26,6 +26,7 @@ class GetObjectMixin:
             pk=self.kwargs.get('post_id')
         )
 
+
 class OnlyAuthorMixin(UserPassesTestMixin):
     """
     Миксин для подтвеждения возможностей

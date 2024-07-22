@@ -122,6 +122,8 @@ class Post(PublishedModel):
 
 
 class Comment(PublishedModel):
+    """Класс комментариев."""
+    
     text = models.TextField('Комментарий', null=False)
     post = models.ForeignKey(
         Post,
