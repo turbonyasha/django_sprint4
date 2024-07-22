@@ -26,3 +26,10 @@ class CommentForm(ModelForm):
         widgets = {
             'text': forms.Textarea(attrs={'rows': '10', 'cols': '20'}),
         }
+
+
+class PostDeleteForm(ModelForm):
+
+    class Meta:
+        model = Post
+        fields = []

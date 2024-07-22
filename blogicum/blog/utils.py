@@ -2,9 +2,9 @@ from datetime import datetime
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
-from django.views.generic.detail import SingleObjectMixin
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.views.generic.detail import SingleObjectMixin
 
 from .models import Post, Comment
 
@@ -18,6 +18,13 @@ def get_published_posts(posts=Post.objects.all()):
         is_published=True
     )
 
+
+class GetObjectMixin:
+    def get_object(self):
+        return get_object_or_404(
+            Post,
+            pk=self.kwargs.get('post_id')
+        )
 
 class OnlyAuthorMixin(UserPassesTestMixin):
     """
@@ -42,13 +49,16 @@ class PaginationMixin(SingleObjectMixin):
 
 
 class CommentObjectAndURLMixin:
+    """
+    Миксин для комментариев
+    """
     def get_object(self):
         if not self.request.user.is_authenticated:
             raise Http404('Пользователь не аутентифицирован')
         return get_object_or_404(
             Comment,
             pk=self.kwargs.get('comment_id'),
-            post=Post.objects.get(pk=self.kwargs.get('post_id')),
+            post=get_object_or_404(Post, pk=self.kwargs.get('post_id')),
             author=self.request.user
         )
 

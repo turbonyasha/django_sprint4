@@ -22,14 +22,14 @@ urlpatterns = [
         name='create_post'
     ),
     path(
+        'profile/edit/',
+        views.ProfileEditView.as_view(),
+        name='edit_profile'
+    ),
+    path(
         'profile/<str:profile>/',
         views.ProfileView.as_view(),
         name='profile'
-    ),
-    path(
-        'auth/edit_profile/',
-        views.ProfileEditView.as_view(),
-        name='edit_profile'
     ),
     path(
         'posts/<int:post_id>/edit/',

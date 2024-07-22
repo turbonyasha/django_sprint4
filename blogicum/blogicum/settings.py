@@ -130,8 +130,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'blog:index'
 
-handler404 = 'pages.views.page_not_found'
-
 CSRF_FAILURE_VIEW = 'pages.views.csrf_failure'
 
-handler500 = 'pages.views.server_error'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+EMAIL_BACKEND = 'django.core.mail.backends.<тип бэкенда>.EmailBackend'
+
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'

@@ -1,26 +1,25 @@
-from django.db.models.base import Model as Model
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models.base import Model as Model
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import (
-    ListView,
-    DetailView,
-    CreateView,
-    UpdateView,
-    DeleteView
-)
-from django.views.generic.detail import SingleObjectMixin
 from django.urls import reverse, reverse_lazy
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
-from .forms import UserProfileForm, CommentForm, PostCreateForm
-from .models import Post, Category, Comment
+from .forms import CommentForm, PostCreateForm, PostDeleteForm, UserProfileForm
+from .models import Category, Comment, Post
 from .utils import (
-    get_published_posts,
+    CommentObjectAndURLMixin,
+    PAGINATION_COUNT,
     OnlyAuthorMixin,
     PaginationMixin,
-    CommentObjectAndURLMixin,
-    PAGINATION_COUNT
+    get_published_posts,
 )
 
 
@@ -37,10 +36,6 @@ class PostListView(ListView):
 
     def get_queryset(self):
         return get_published_posts().order_by('-pub_date')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
@@ -69,6 +64,12 @@ class SinglePostView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
     pk_url_kwarg = 'post_id'
+
+    def get_object(self):
+        return get_object_or_404(
+            Post,
+            pk=self.kwargs.get('post_id')
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -102,6 +103,9 @@ class PostUpdateView(OnlyAuthorMixin, UpdateView):
             'blog:post_detail',
             kwargs={'post_id': self.kwargs.get('post_id')}
         )
+    
+    def handle_no_permission(self):
+        return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
 
 
 class PostDeleteView(OnlyAuthorMixin, DeleteView):
@@ -109,21 +113,26 @@ class PostDeleteView(OnlyAuthorMixin, DeleteView):
 
     model = Post
     success_url = reverse_lazy('blog:index')
+    form_class = PostDeleteForm
     template_name = 'blog/create.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if self.get_object().author != self.request.user:
-            return redirect(
-                'blog:post_detail',
-                self.kwargs.get('post_id')
-            )
-        return super().dispatch(request, *args, **kwargs)
-
+    
     def get_object(self):
         return get_object_or_404(
             Post,
-            pk=self.kwargs.get('post_id'),
+            pk=self.kwargs.get('post_id')
         )
+    
+    def form_valid(self, form):
+        return super(PostDeleteForm, self).form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form = self.form_class(instance=self.object)
+        context['form'] = form
+        return context
+    
+    def handle_no_permission(self):
+        return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
 
 
 class CategoryView(ListView):
@@ -138,20 +147,16 @@ class CategoryView(ListView):
     context_object_name = 'category'
 
     def get_queryset(self):
-        category_slug = self.kwargs['category_slug']
-        return (
-            get_published_posts()
-            .filter(category__slug=category_slug)
-            .order_by('-pub_date'))
+        self.category = get_object_or_404(
+            Category,
+            slug=self.kwargs['category_slug'],
+            is_published=True
+        )
+        return get_published_posts().filter(category=self.category).order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        category_slug = self.kwargs['category_slug']
-        try:
-            category = Category.objects.get(slug=category_slug)
-            context['category'] = category.title
-        except Category.DoesNotExist:
-            context['category'] = 'Категория не существует'
+        context['category'] = self.category
         return context
 
 
@@ -194,7 +199,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
             'blog:profile',
             kwargs={'profile': self.object.username}
         )
-    
+
 
 class CommentCreateView(
     CommentObjectAndURLMixin,
