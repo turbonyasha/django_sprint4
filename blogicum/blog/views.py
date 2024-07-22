@@ -118,8 +118,10 @@ class PostDeleteView(OnlyAuthorMixin, GetObjectMixin, DeleteView):
 
 
 class CategoryView(ListView):
-    """CBV для отображения списка всех постов
-    в определенной категории."""
+    """
+    CBV для отображения списка всех постов
+    в определенной категории.
+    """
 
     model = Post
     ordering = 'id'
@@ -225,6 +227,6 @@ class CommentUpdateView(CommentObjectAndURLMixin, UpdateView):
 
 class CommentDeleteView(CommentObjectAndURLMixin, DeleteView):
     """CBV для удаления комментария от пользователя."""
-    
+
     model = Comment
     template_name = 'blog/comment.html'

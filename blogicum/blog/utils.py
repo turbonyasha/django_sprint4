@@ -21,6 +21,7 @@ def get_published_posts(posts=Post.objects.all()):
 
 class GetObjectMixin:
     """Миксин для get_object Post."""
+    
     def get_object(self):
         return get_object_or_404(
             Post,
