@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models.base import Model as Model
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -170,9 +169,7 @@ class ProfileView(PaginationMixin, ListView):
 
 
 class ProfileEditView(LoginRequiredMixin, UpdateView):
-    """
-    CBV для редактирования профиля пользователя.
-    """
+    """CBV для редактирования профиля пользователя."""
 
     model = User
     form_class = UserProfileForm
@@ -180,7 +177,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 
     def get_object(self):
         return User.objects.get(username=self.request.user.username)
-    
+
     def get_success_url(self):
         return reverse(
             'blog:profile',
@@ -193,9 +190,7 @@ class CommentCreateView(
     LoginRequiredMixin,
     CreateView
 ):
-    """
-    CBV для создания комментария от пользователя.
-    """
+    """CBV для создания комментария от пользователя."""
 
     model = Comment
     form_class = CommentForm
@@ -215,9 +210,7 @@ class CommentCreateView(
 
 
 class CommentUpdateView(CommentObjectAndURLMixin, UpdateView):
-    """
-    CBV для редактирования комментария от пользователя.
-    """
+    """CBV для редактирования комментария от пользователя."""
 
     model = Comment
     form_class = CommentForm
@@ -231,8 +224,7 @@ class CommentUpdateView(CommentObjectAndURLMixin, UpdateView):
 
 
 class CommentDeleteView(CommentObjectAndURLMixin, DeleteView):
-    """
-    CBV для удаления комментария от пользователя.
-    """
+    """CBV для удаления комментария от пользователя."""
+    
     model = Comment
     template_name = 'blog/comment.html'

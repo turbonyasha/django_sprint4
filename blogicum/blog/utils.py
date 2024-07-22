@@ -20,6 +20,7 @@ def get_published_posts(posts=Post.objects.all()):
 
 
 class GetObjectMixin:
+    """Миксин для get_object Post."""
     def get_object(self):
         return get_object_or_404(
             Post,
@@ -32,15 +33,15 @@ class OnlyAuthorMixin(UserPassesTestMixin):
     Миксин для подтвеждения возможностей
     пользователя на удаление и редактирование.
     """
+
     def test_func(self):
         object = self.get_object()
         return object.author == self.request.user
 
 
 class PaginationMixin(SingleObjectMixin):
-    """
-    Миксин для пагинации на странице пользователя
-    """
+    """Миксин для пагинации на странице пользователя."""
+
     paginate_by = PAGINATION_COUNT
 
     def get_queryset(self):
@@ -50,9 +51,8 @@ class PaginationMixin(SingleObjectMixin):
 
 
 class CommentObjectAndURLMixin:
-    """
-    Миксин для комментариев
-    """
+    """Миксин для комментариев."""
+
     def get_object(self):
         if not self.request.user.is_authenticated:
             raise Http404('Пользователь не аутентифицирован')

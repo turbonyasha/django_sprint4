@@ -48,7 +48,7 @@ class Category(PublishedModel):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title 
+        return self.title
 
 
 class Location(PublishedModel):
@@ -123,7 +123,7 @@ class Post(PublishedModel):
 
 class Comment(PublishedModel):
     """Класс комментариев."""
-    
+
     text = models.TextField('Комментарий', null=False)
     post = models.ForeignKey(
         Post,
