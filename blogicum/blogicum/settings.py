@@ -26,7 +26,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static_dev']
 SECRET_KEY = 'django-insecure-i0)s6rx%@@3pc7sc1o5&m=ri8752kp2_=3hc!(ibs4_vvan_(n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
@@ -113,7 +113,7 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
 USE_TZ = True
 
@@ -130,4 +130,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'blog:index'
 
-POSTS_PER_PAGE = 10
+handler404 = 'pages.views.page_not_found'
+
+CSRF_FAILURE_VIEW = 'pages.views.csrf_failure'
+
+handler500 = 'pages.views.server_error'

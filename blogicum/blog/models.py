@@ -109,4 +109,21 @@ class Post(PublishedModel):
         default_related_name = 'posts'
 
     def __str__(self):
-        return self.title 
+        return self.title
+
+    @property
+    def comment_count(self):
+        return self.comments.count()
+
+
+class Comment(PublishedModel):
+    text = models.TextField('Комментарий', null=False)
+    post = models.ForeignKey(
+        Post,
+        related_name='comments',
+        on_delete=models.CASCADE,
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
