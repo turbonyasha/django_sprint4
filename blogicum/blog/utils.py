@@ -1,31 +1,26 @@
 from django.db.models import Count
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
 
 from .models import Post, Comment
 
 
-def posts_request_method(posts):
-    return (
+def get_published_posts(posts=Post.objects.all(), include_unpublished=False):
+    on_page_posts = (
         posts
         .annotate(comment_count=Count('comments'))
         .select_related('author', 'location', 'category')
         .order_by(*Post._meta.ordering)
     )
-
-
-def get_published_posts(posts=Post.objects.all(), add_unpublished=False):
-    if add_unpublished:
-        return posts_request_method(posts)
-    return (
-        posts_request_method(posts).filter(
+    if not include_unpublished:
+        on_page_posts = on_page_posts.filter(
             pub_date__lte=timezone.now(),
             category__is_published=True,
             is_published=True
         )
-    )
+    return on_page_posts
 
 
 class OnlyAuthorMixin(UserPassesTestMixin):
@@ -43,18 +38,13 @@ class CommentMixin:
 
     model = Comment
     template_name = 'blog/comment.html'
+    pk_url_kwarg = 'comment_id'
 
     def dispatch(self, request, *args, **kwargs):
-        self.comment = self.get_object()
-        if self.comment.author != self.request.user:
-            return redirect('blog:post_detail', post_id=self.comment.id)
+        comment = self.get_object()
+        if comment.author != self.request.user:
+            return redirect('blog:post_detail', post_id=comment.comments__id)
         return super().dispatch(request, *args, **kwargs)
-
-    def get_object(self):
-        return get_object_or_404(
-            Comment,
-            id=self.kwargs['comment_id'],
-        )
 
     def get_success_url(self):
         return reverse(

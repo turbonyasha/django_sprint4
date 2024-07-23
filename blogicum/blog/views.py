@@ -152,8 +152,8 @@ class ProfileView(ListView):
     def get_queryset(self):
         return get_published_posts(
             posts=self.get_author().posts.all(),
-            add_unpublished=(
-                self.request.user.username == self.get_author().username
+            include_unpublished=(
+                self.request.user == self.get_author()
             )
         )
 
