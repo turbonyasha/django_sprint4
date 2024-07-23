@@ -53,12 +53,6 @@ class SinglePostView(DetailView):
     template_name = 'blog/detail.html'
     pk_url_kwarg = 'post_id'
 
-    # def get_object(self):
-    #     return get_object_or_404(
-    #         Post,
-    #         pk=self.kwargs.get(self.pk_url_kwarg)
-    #     )
-
     def get_post(self):
         post = self.get_object()
         if post.author != self.request.user:
@@ -156,12 +150,11 @@ class ProfileView(ListView):
         )
 
     def get_queryset(self):
-        show_unpublished = False
-        if self.request.user.username == self.get_author().username:
-            show_unpublished = True
         return get_published_posts(
             posts=self.get_author().posts.all(),
-            show_unpublished=show_unpublished
+            add_unpublished=(
+                self.request.user.username == self.get_author().username
+            )
         )
 
     def get_context_data(self, **kwargs):

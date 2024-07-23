@@ -7,22 +7,24 @@ from django.utils import timezone
 from .models import Post, Comment
 
 
-def get_published_posts(posts=Post.objects.all(), show_unpublished=False):
-    if show_unpublished:
-        return (
-            posts
-            .annotate(comment_count=Count('comments'))
-            .select_related('author', 'location', 'category')
-            .order_by(*Post._meta.ordering)
-        )
+def posts_request_method(posts):
     return (
-        posts.filter(
+        posts
+        .annotate(comment_count=Count('comments'))
+        .select_related('author', 'location', 'category')
+        .order_by(*Post._meta.ordering)
+    )
+
+
+def get_published_posts(posts=Post.objects.all(), add_unpublished=False):
+    if add_unpublished:
+        return posts_request_method(posts)
+    return (
+        posts_request_method(posts).filter(
             pub_date__lte=timezone.now(),
             category__is_published=True,
             is_published=True
-        ).annotate(comment_count=Count('comments'))
-        .select_related('author', 'location', 'category')
-        .order_by(*Post._meta.ordering)
+        )
     )
 
 
@@ -37,24 +39,22 @@ class OnlyAuthorMixin(UserPassesTestMixin):
 
 
 class CommentMixin:
+    """Миксин для действий с комментариями."""
+
     model = Comment
     template_name = 'blog/comment.html'
-    comment = None
 
     def dispatch(self, request, *args, **kwargs):
+        self.comment = self.get_object()
         if self.comment.author != self.request.user:
             return redirect('blog:post_detail', post_id=self.comment.id)
         return super().dispatch(request, *args, **kwargs)
 
-    def get_comment(self):
-        self.comment = get_object_or_404(
+    def get_object(self):
+        return get_object_or_404(
             Comment,
             id=self.kwargs['comment_id'],
         )
-        return self.comment
-
-    def get_object(self):
-        return self.get_comment()
 
     def get_success_url(self):
         return reverse(
