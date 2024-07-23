@@ -230,5 +230,5 @@ class CommentDeleteView(
     LoginRequiredMixin, OnlyAuthorMixin, CommentMixin, DeleteView
 ):
     """CBV для удаления комментария от пользователя."""
-    
+
     pass
