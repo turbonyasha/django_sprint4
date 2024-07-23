@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 
-from .models import Post, Comment
+from .models import Post
 
 
 def get_published_posts(posts=Post.objects.all()):
