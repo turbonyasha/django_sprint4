@@ -53,18 +53,18 @@ class SinglePostView(DetailView):
     template_name = 'blog/detail.html'
     pk_url_kwarg = 'post_id'
 
-    def get_object(self):
-        return get_object_or_404(
-            Post,
-            pk=self.kwargs.get(self.pk_url_kwarg)
-        )
+    # def get_object(self):
+    #     return get_object_or_404(
+    #         Post,
+    #         pk=self.kwargs.get(self.pk_url_kwarg)
+    #     )
 
     def get_post(self):
         post = self.get_object()
         if post.author != self.request.user:
             post = get_object_or_404(
                 get_published_posts(),
-                category__is_published=True,
+                pk=self.kwargs.get(self.pk_url_kwarg)
             )
         return post
 
@@ -149,22 +149,24 @@ class ProfileView(ListView):
     slug_url_kwarg = 'profile'
     paginate_by = settings.PAGINATION_COUNT
 
-    def get_user(self):
+    def get_author(self):
         return get_object_or_404(
             User,
             username=self.kwargs[self.slug_url_kwarg]
         )
 
     def get_queryset(self):
-        self.user = self.get_user()
-        if self.request.user.username == self.user.username:
-            return self.user.posts.all()
-        else:
-            return get_published_posts(posts=self.user.posts.all())
+        show_unpublished = False
+        if self.request.user.username == self.get_author().username:
+            show_unpublished = True
+        return get_published_posts(
+            posts=self.get_author().posts.all(),
+            show_unpublished=show_unpublished
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['profile'] = self.get_user()
+        context['profile'] = self.get_author()
         return context
 
 

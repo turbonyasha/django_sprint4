@@ -91,7 +91,7 @@ class Post(PublishedModel):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор публикации'
+        verbose_name='Автор'
     )
     location = models.ForeignKey(
         Location,
@@ -134,7 +134,7 @@ class Comment(PublishedModel):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор комментария'
+        verbose_name='Автор'
     )
 
     class Meta:

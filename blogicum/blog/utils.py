@@ -7,7 +7,14 @@ from django.utils import timezone
 from .models import Post, Comment
 
 
-def get_published_posts(posts=Post.objects.all()):
+def get_published_posts(posts=Post.objects.all(), show_unpublished=False):
+    if show_unpublished:
+        return (
+            posts
+            .annotate(comment_count=Count('comments'))
+            .select_related('author', 'location', 'category')
+            .order_by(*Post._meta.ordering)
+        )
     return (
         posts.filter(
             pub_date__lte=timezone.now(),
@@ -35,18 +42,19 @@ class CommentMixin:
     comment = None
 
     def dispatch(self, request, *args, **kwargs):
-        comment_post = self.comment
-        if comment_post.author != self.request.user:
-            return redirect('blog:post_detail', post_id=comment_post.id)
+        if self.comment.author != self.request.user:
+            return redirect('blog:post_detail', post_id=self.comment.id)
         return super().dispatch(request, *args, **kwargs)
 
-    def get_object(self):
+    def get_comment(self):
         self.comment = get_object_or_404(
             Comment,
             id=self.kwargs['comment_id'],
-            post__id=self.kwargs['post_id'],
         )
         return self.comment
+
+    def get_object(self):
+        return self.get_comment()
 
     def get_success_url(self):
         return reverse(
