@@ -48,13 +48,10 @@ class Category(PublishedModel):
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
-        ordering = ['title']
+        ordering = ('title',)
 
     def __str__(self):
-        max_length = MAX_LENGTH_STR
-        shortened_title = ((self.title[:max_length] + '...')
-                           if len(self.title) > max_length else self.title)
-        return f'{shortened_title}'
+        return self.title[:MAX_LENGTH_STR]
 
 
 class Location(PublishedModel):
@@ -69,13 +66,10 @@ class Location(PublishedModel):
     class Meta:
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
-        ordering = ['name']
+        ordering = ('name',)
 
     def __str__(self):
-        max_length = MAX_LENGTH_STR
-        shortened_name = ((self.name[:max_length] + '...')
-                          if len(self.name) > max_length else self.name)
-        return f'{shortened_name}'
+        return self.name[:MAX_LENGTH_STR]
 
 
 class Post(PublishedModel):
@@ -125,10 +119,7 @@ class Post(PublishedModel):
         default_related_name = 'posts'
 
     def __str__(self):
-        max_length = MAX_LENGTH_STR
-        shortened_title = ((self.title[:max_length] + '...')
-                           if len(self.title) > max_length else self.title)
-        return f'{shortened_title}'
+        return self.title[:MAX_LENGTH_STR]
 
 
 class Comment(PublishedModel):
@@ -138,14 +129,15 @@ class Comment(PublishedModel):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
+        verbose_name='Пост'
     )
     author = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Автор комментария'
     )
 
     class Meta:
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
         default_related_name = 'comments'
-        ordering = ['post']
