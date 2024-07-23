@@ -26,7 +26,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static_dev']
 SECRET_KEY = 'django-insecure-i0)s6rx%@@3pc7sc1o5&m=ri8752kp2_=3hc!(ibs4_vvan_(n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
@@ -134,6 +134,8 @@ CSRF_FAILURE_VIEW = 'pages.views.csrf_failure'
 
 MEDIA_ROOT = BASE_DIR / 'media'
 
-EMAIL_BACKEND = 'django.core.mail.backends.<тип бэкенда>.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
+
+PAGINATION_COUNT = 10

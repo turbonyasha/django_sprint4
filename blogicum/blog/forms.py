@@ -8,7 +8,7 @@ from .models import Post, Comment
 class UserProfileForm(ModelForm):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'email']
+        fields = ('first_name', 'last_name', 'username', 'email',)
 
 
 class PostCreateForm(ModelForm):
@@ -24,9 +24,6 @@ class CommentForm(ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
-        widgets = {
-            'text': forms.Textarea(attrs={'rows': '10', 'cols': '20'}),
-        }
 
 
 class PostDeleteForm(ModelForm):

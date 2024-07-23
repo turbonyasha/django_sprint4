@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+MAX_LENGTH_STR = 30
+
 
 User = get_user_model()
 
@@ -46,9 +48,13 @@ class Category(PublishedModel):
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
+        ordering = ['title']
 
     def __str__(self):
-        return self.title
+        max_length = MAX_LENGTH_STR
+        shortened_title = ((self.title[:max_length] + '...')
+                           if len(self.title) > max_length else self.title)
+        return f'{shortened_title}'
 
 
 class Location(PublishedModel):
@@ -63,9 +69,13 @@ class Location(PublishedModel):
     class Meta:
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
+        ordering = ['name']
 
     def __str__(self):
-        return self.name
+        max_length = MAX_LENGTH_STR
+        shortened_name = ((self.name[:max_length] + '...')
+                          if len(self.name) > max_length else self.name)
+        return f'{shortened_name}'
 
 
 class Post(PublishedModel):
@@ -109,16 +119,16 @@ class Post(PublishedModel):
     )
 
     class Meta:
+        ordering = ['-pub_date']
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         default_related_name = 'posts'
 
     def __str__(self):
-        return self.title
-
-    @property
-    def comment_count(self):
-        return self.comments.count()
+        max_length = MAX_LENGTH_STR
+        shortened_title = ((self.title[:max_length] + '...')
+                           if len(self.title) > max_length else self.title)
+        return f'{shortened_title}'
 
 
 class Comment(PublishedModel):
@@ -127,10 +137,15 @@ class Comment(PublishedModel):
     text = models.TextField('Комментарий', null=False)
     post = models.ForeignKey(
         Post,
-        related_name='comments',
         on_delete=models.CASCADE,
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
+        default_related_name = 'comments'
+        ordering = ['post']
