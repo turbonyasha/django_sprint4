@@ -44,7 +44,7 @@ class CommentMixin:
     def dispatch(self, request, *args, **kwargs):
         comment = self.get_object()
         if comment.author != self.request.user:
-            return redirect('blog:post_detail', post_id=comment.comments.id)
+            return redirect('blog:post_detail', post_id=comment.id)
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
