@@ -7,20 +7,20 @@ from django.utils import timezone
 from .models import Post, Comment
 
 
-def get_published_posts(posts=Post.objects.all(), include_unpublished=False):
-    on_page_posts = (
+def get_published_posts(posts=Post.objects.all(), filter_published=True):
+    posts = (
         posts
         .annotate(comment_count=Count('comments'))
         .select_related('author', 'location', 'category')
         .order_by(*Post._meta.ordering)
     )
-    if not include_unpublished:
-        on_page_posts = on_page_posts.filter(
+    if filter_published:
+        posts = posts.filter(
             pub_date__lte=timezone.now(),
             category__is_published=True,
             is_published=True
         )
-    return on_page_posts
+    return posts
 
 
 class OnlyAuthorMixin(UserPassesTestMixin):
@@ -41,9 +41,9 @@ class CommentMixin:
     pk_url_kwarg = 'comment_id'
 
     def dispatch(self, request, *args, **kwargs):
-        comment = self.get_object()
-        if comment.author != self.request.user:
-            return redirect('blog:post_detail', post_id=comment.comments__id)
+        post = self.get_object()
+        if post.author != self.request.user:
+            return redirect('blog:post_detail', post_id=post.comments__id)
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
