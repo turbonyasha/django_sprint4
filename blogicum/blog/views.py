@@ -39,7 +39,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse(
             'blog:profile', args=[self.request.user.username]
@@ -53,7 +53,6 @@ class SinglePostView(DetailView):
     template_name = 'blog/detail.html'
     pk_url_kwarg = 'post_id'
 
-    
     def get_post(self):
         post = self.get_object()
         if post.author != self.request.user:
