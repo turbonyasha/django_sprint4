@@ -1,5 +1,5 @@
-from django.db.models import Count
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.db.models import Count
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -8,11 +8,12 @@ from .models import Post, Comment
 
 
 def get_published_posts(posts=Post.objects.all(), filter_published=True):
-    posts = (
-        posts
-        .annotate(comment_count=Count('comments'))
-        .select_related('author', 'location', 'category')
-        .order_by(*Post._meta.ordering)
+    posts = posts.annotate(
+        comment_count=Count('comments')
+    ). select_related(
+        'author', 'location', 'category'
+    ).order_by(
+        *Post._meta.ordering
     )
     if filter_published:
         posts = posts.filter(
@@ -41,13 +42,13 @@ class CommentMixin:
     pk_url_kwarg = 'comment_id'
 
     def dispatch(self, request, *args, **kwargs):
-        post = self.get_object()
-        if post.author != self.request.user:
-            return redirect('blog:post_detail', post_id=post.comments__id)
+        comment = self.get_object()
+        if comment.author != self.request.user:
+            return redirect('blog:post_detail', post_id=comment.comments.id)
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         return reverse(
             'blog:post_detail',
-            args=[self.kwargs.get('post_id')]
+            args=[self.kwargs['post_id']]
         )
